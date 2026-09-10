@@ -1,4 +1,19 @@
-_diag.html
-*.tmp
-.DS_Store
-Thumbs.db
+# operator's private reference material — NEVER commit or publish
+assets/Gemini_Generated_Image_*
+assets/Без имени*
+assets/чем.jpg
+assets/*.png~
+assets/*.jpg~
+
+# working artefacts, not deliverables
+shots/
+_diag*.html
+*.bak
+
+# local-only drafts that must not reach the deployed site
+start.bat
+mockup-*.html
+robot-hall-playground.html
+_pre_v2_backup/
+_build_freqs.json
+assets/bot-android.svg
