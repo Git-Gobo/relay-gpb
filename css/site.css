@@ -418,3 +418,43 @@ body.retuning main{animation:none}
   .skip{padding:11px 16px}
   .piece .byline .ctl .btn{min-height:32px}
 }
+
+
+/* ═══════ QSL variant: a dispatch is a confirmed-reception card ═══════
+   A real QSL card is what a radio operator sends back to confirm "yes, I received
+   your transmission" — TX callsign, frequency, signal report (RST). It is the one
+   object in radio culture that proves a message crossed the air and landed, which
+   is exactly what this feed is: transmissions that cleared the gate and reached
+   people. Everything below is scoped under .card.qsl — an unscoped decorative
+   class (.stamp/.seal) once hijacked a same-named element on another page here.
+   The ghost numeral (.no) stays; the right-hand column reserves room for it.
+   Geometry note: the seal is rotated, so its bounding box is larger than its
+   declared size — the reserved padding accounts for the ROTATED box. */
+.card.qsl{display:grid;grid-template-columns:228px minmax(0,1fr);padding:0;align-items:stretch;overflow:visible}
+.card.qsl:nth-child(odd){transform:rotate(-.3deg)}
+.card.qsl:nth-child(even){transform:rotate(.3deg)}
+.card.qsl:hover,.card.qsl:focus-visible{transform:rotate(0deg) translateY(-2px);background:var(--panel)}
+.card.qsl .qsl-left{position:relative;padding:16px 16px 70px 20px;border-right:2px dashed rgba(255,180,84,.35);background:rgba(255,180,84,.03);display:flex;flex-direction:column;gap:4px;min-width:0}
+.card.qsl .qsl-tag{font:700 19px/1 var(--mono);letter-spacing:.2em;color:var(--amber);margin-bottom:7px;text-shadow:0 0 18px rgba(255,180,84,.35)}
+.card.qsl .qsl-row{font:400 12px/1.5 var(--mono);color:var(--muted);letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.qsl .qsl-row.tx{white-space:normal;overflow-wrap:anywhere;text-overflow:clip}
+.card.qsl .qsl-row b{color:var(--cyan);font-weight:500}
+.card.qsl .qsl-row.rst{color:var(--live);letter-spacing:.12em}
+.card.qsl .seal{position:absolute;right:10px;bottom:10px;width:44px;height:44px;border:1.5px solid rgba(255,180,84,.42);border-radius:50%;display:grid;place-items:center;text-align:center;font:600 7px/1.3 var(--mono);letter-spacing:.04em;color:rgba(255,180,84,.66);transform:rotate(-14deg);text-transform:uppercase}
+.card.qsl .seal::before{content:"";position:absolute;inset:4px;border:1px solid rgba(255,180,84,.34);border-radius:50%}
+.card.qsl .qsl-right{position:relative;padding:18px 128px 18px 22px;min-width:0}
+.card.qsl .no{right:16px;top:4px}
+@media (max-width:640px){
+  .card.qsl{grid-template-columns:minmax(0,1fr)}
+  .card.qsl .qsl-left{border-right:0;border-bottom:2px dashed rgba(255,180,84,.35);flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:14px 16px 12px}
+  .card.qsl .qsl-tag{font-size:16px;margin:0 8px 0 0}
+  .card.qsl .qsl-row,.card.qsl .qsl-row.tx{white-space:normal;overflow:visible;text-overflow:clip}
+  .card.qsl .seal{position:static;width:auto;height:auto;border:1px solid rgba(255,180,84,.5);border-radius:999px;padding:4px 10px;transform:none;font-size:9px;letter-spacing:.08em;margin-left:auto}
+  .card.qsl .seal::before{display:none}
+  .card.qsl .no{display:none}
+  .card.qsl .qsl-right{padding-right:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  .card.qsl,.card.qsl:nth-child(odd),.card.qsl:nth-child(even),
+  .card.qsl:hover,.card.qsl:focus-visible{transform:none}
+}
