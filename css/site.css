@@ -693,3 +693,27 @@ button.btn.transmit{min-width:150px}
   .btn,.btn::after{transition:none}
   .btn:hover,.btn:active{transform:none}
 }
+
+/* ═══════ the card's EXIT: it dissolves back into the projector's cone ═══════
+   Leaving used to be `card.hidden = true` on the exact frame the needle left the lock
+   window, so sweeping the band cut a 1.25s demodulation off at ~100ms - the card appeared
+   and vanished almost instantly. Now the exit mirrors the entrance over 300ms: text goes
+   first (blurring up), the panel follows, the nebula flares back to the brightness it had
+   before the card condensed out of it, and the static gets one last faint breath. The
+   projector keeps glowing through the whole thing, so the slot never reads as empty.
+   JS removes the class and re-hides the element when the fade finishes. */
+.hero-v3 .station-card.out{animation:dm-release-card .42s ease-out both}
+.hero-v3 .station-card.out .dm-content{animation:dm-release-text .42s ease-out both}
+.hero-v3 .station-card.out .dm-cloud{animation:dm-release-cloud .42s ease-out both}
+.hero-v3 .station-card.out .dm-static{animation:dm-release-static .42s ease-out both;visibility:visible}
+.hero-v3 .station-card.out .dm-sweep{animation:none;opacity:0}
+.hero-v3 .station-card.out::before{animation:none;opacity:1}
+@keyframes dm-release-card{from{opacity:1;filter:none}to{opacity:0;filter:blur(2px) saturate(.7)}}
+@keyframes dm-release-text{from{opacity:1;filter:none;transform:none}to{opacity:0;filter:blur(6px);transform:translateY(-4px) scale(.995)}}
+@keyframes dm-release-cloud{from{opacity:.62;filter:none}to{opacity:.95;filter:blur(4px)}}
+@keyframes dm-release-static{from{opacity:.04}to{opacity:.2}}
+@media (prefers-reduced-motion:reduce){
+  .hero-v3 .station-card.out,.hero-v3 .station-card.out .dm-content,
+  .hero-v3 .station-card.out .dm-cloud,.hero-v3 .station-card.out .dm-static{animation:none!important}
+  .hero-v3 .station-card.out{opacity:0}
+}

@@ -292,14 +292,76 @@
 
   /* ---------- tuner mechanics ---------- */
   var freq = 45.062, vel = 0, dragging = false, locked = null, lastTouch = Date.now(), glide = null;
+  var cand = null, candSince = 0, fadeT = null, dwellT = null, snapRaf = null, fading = null,
+      DWELL = 180, FADE = 420;
 
+  /* Re-evaluate the dwell once it has elapsed, for the case where nothing moves any more. */
+  function armDwell() {
+    if (dwellT) { clearTimeout(dwellT); dwellT = null; }
+    if (RM || !cand) return;
+    dwellT = setTimeout(function () {
+      dwellT = null;
+      if (!cand || locked === cand) return;
+      if (nearest(freq) !== cand) return;      /* the needle has already moved on */
+      locked = cand; onLock(cand); refreshReadout();
+    }, DWELL);
+  }
+
+  /* The readout + aria text describe the LOCK, which the dwell timer can grant long after
+     setFreq last ran. Keeping this inline in setFreq left the hero saying
+     "NO CARRIER · static" while a demodulated station card sat on screen (visible on the
+     very first frame after load). Both paths now call it. */
+  function refreshReadout() {
+    /* `fading` keeps the released station named for as long as its card is still visibly
+       dissolving. Without it the hero read "NO CARRIER · static" for 420ms while a station
+       card sat on screen - the same desync the dwell timer had, in the other direction. */
+    roState.textContent = Math.abs(vel) > .015 ? "TUNING\u2026" :
+      locked ? (locked.home ? "GPB HOME · ON AIR · RST 599" : locked.call + " · LOCKED · RST 599")
+      : fading ? fading.call + " · DROPPING\u2026"
+               : "NO CARRIER · static";
+    scale.setAttribute("aria-valuetext", freq.toFixed(3) + " kilohertz, " +
+      (locked ? locked.call + ", locked" : "no carrier"));
+  }
+
+  /* The card leaves the way it arrived: it dissolves back into the projector's cone over
+     300ms instead of vanishing on the frame the needle exits. Reduced motion still hides
+     it immediately (no animation to misread). */
+  var lastLocked = null;
+  function releaseCard() {
+    if (fadeT) { clearTimeout(fadeT); fadeT = null; }
+    if (rig) rig.classList.remove("on");
+    if (RM) { card.hidden = true; card.classList.remove("out"); return; }
+    fading = lastLocked;
+    card.classList.add("out");
+    fadeT = setTimeout(function () {
+      card.hidden = true; card.classList.remove("out"); fadeT = null;
+      fading = null; refreshReadout();
+    }, FADE);
+  }
+
+  /* Lock hysteresis. Two windows, not one: a station is CAPTURED inside the narrow window
+     but only RELEASED outside the wide one, so a needle resting on a station cannot
+     flicker off from a 1px tremor. Both are floored in PIXELS, not kHz: the old fixed
+     ±.08 kHz window measured 6.4 px on a 360px phone (40 px/kHz), which is why the card
+     felt like it snapped on and off while sweeping - a finger cannot hold a 6px target.
+     Recomputed on resize because the scale is fluid. */
+  var coarse = !!(window.matchMedia && matchMedia("(pointer:coarse)").matches);
+  var lockCap = .09, lockHold = .17;
+  function sizeLockWindows() {
+    var w = scale.getBoundingClientRect().width;
+    if (!w) return;
+    var perKhz = w / (FMAX - FMIN);
+    var halfPx = coarse ? 15 : 12;
+    lockCap = Math.max(.09, halfPx / perKhz);
+    lockHold = lockCap * 1.85;
+  }
   function nearest(f) {
     var best = null, bd = 1e9;
     for (var i = 0; i < STATIONS.length; i++) {
       var d = Math.abs(STATIONS[i].f - f);
       if (d < bd) { bd = d; best = STATIONS[i]; }
     }
-    return bd <= .08 ? best : null;
+    return bd <= (locked ? lockHold : lockCap) ? best : null;
   }
   /* The card is a grid item now (copy left / card right) — no manual positioning.
      Only re-seats itself if the layout ever puts it back to absolute (legacy mockups). */
@@ -314,6 +376,10 @@
   }
   function positionCardSettled() { positionCard(); }
   function onLock(s) {
+    if (fadeT) { clearTimeout(fadeT); fadeT = null; }
+    if (dwellT) { clearTimeout(dwellT); dwellT = null; }
+    fading = null; lastLocked = s;
+    card.classList.remove("out");
     scCall.textContent = s.call; scTitle.textContent = s.t; scEx.textContent = s.ex;
     scGo.textContent = s.goLabel; scGo.setAttribute("href", s.go);
     card.hidden = false; if (innerWidth > 640) positionCardSettled();
@@ -341,14 +407,19 @@
     scale.setAttribute("aria-valuenow", f.toFixed(3));
     ether.setNeedle(pct);
     if (typeof userVel === "number") { vel = userVel; ether.setVel(userVel); }
-    var s = nearest(f);
-    if (s && s !== locked) { locked = s; onLock(s); }
-    else if (!s && locked) { locked = null; card.hidden = true; if (rig) rig.classList.remove("on"); ether.unlock(); }
+    /* Dwell: a station has to be held for DWELL ms before the card demodulates. Sweeping
+       across the band used to fire a fresh 1.25s demodulation for every station the needle
+       passed, each cut off at ~100ms - the "flashes on and off" the operator reported.
+       Now passing stations draw nothing at all; only resting on one does.
+       armDwell() is required, not optional: setFreq runs only when something MOVES, so a
+       single click or tap onto a station gets exactly one evaluation - with no timer the
+       dwell would never elapse and the card would never appear. */
+    var s = nearest(f), now = performance.now();
+    if (s !== cand) { cand = s; candSince = now; armDwell(); }
+    if (s && locked !== s && (RM || now - candSince >= DWELL)) { locked = s; onLock(s); }
+    else if (!s && locked) { locked = null; releaseCard(); ether.unlock(); }
     roFreq.textContent = f.toFixed(3);
-    roState.textContent = Math.abs(vel) > .015 ? "TUNING\u2026" :
-      locked ? (locked.home ? "GPB HOME · ON AIR · RST 599" : locked.call + " · LOCKED · RST 599")
-             : "NO CARRIER · static";
-    scale.setAttribute("aria-valuetext", f.toFixed(3) + " kilohertz, " + (locked ? locked.call + ", locked" : "no carrier"));
+    refreshReadout();
     if (RM && !locked) ether.setVel(0);
   }
   function fFromX(clientX) {
@@ -357,11 +428,12 @@
   }
 
   /* drag with inertia */
-  var lastX = 0, lastTm = 0, trackVel = 0;
+  var lastX = 0, lastTm = 0, trackVel = 0, lastMoveAt = 0;
   scale.addEventListener("pointerdown", function (e) {
     dragging = true; lastTouch = Date.now();
+    if (snapRaf) { cancelAnimationFrame(snapRaf); snapRaf = null; }
     scale.setPointerCapture(e.pointerId);
-    lastX = e.clientX; lastTm = performance.now(); trackVel = 0;
+    lastX = e.clientX; lastTm = performance.now(); lastMoveAt = performance.now(); trackVel = 0;
     if (glide) { cancelAnimationFrame(glide); glide = null; }
     setFreq(fFromX(e.clientX), 0);
     e.preventDefault();
@@ -371,19 +443,56 @@
     var now = performance.now(), dt = Math.max(8, now - lastTm);
     var df = fFromX(e.clientX) - fFromX(lastX);
     trackVel = df / dt * 16;             /* kHz per frame */
-    lastX = e.clientX; lastTm = now; lastTouch = now ? Date.now() : 0;
+    lastX = e.clientX; lastTm = now; lastMoveAt = performance.now(); lastTouch = Date.now();
     setFreq(fFromX(e.clientX), trackVel);
   });
+  /* Detent: when the needle comes to rest, if it stopped within the capture window of a
+     station it clicks onto that station's exact frequency. Without this, inertia carries a
+     flick straight past a station and - now that the card needs the needle to be HELD -
+     the user gets nothing at all, which reads as a broken control. A real tuning dial has
+     physical detents; this is the same affordance. Measured: dragging to 42.660 and
+     releasing landed on 43.780 (0.36 kHz off) with no card. */
+  function detent() {
+    if (RM) return false;
+    var best = null, bd = 1e9;
+    for (var i = 0; i < STATIONS.length; i++) {
+      var d = Math.abs(STATIONS[i].f - freq);
+      if (d < bd) { bd = d; best = STATIONS[i]; }
+    }
+    /* radius in PIXELS, not kHz, and deliberately modest (11px): the old instant
+       setFreq(best.f) teleported the needle by up to 26px, which reads as a glitch rather
+       than as a detent. Now the last few pixels are eased over ~220ms, so it looks like the
+       dial clicking into a notch instead of jumping. */
+    var w = scale.getBoundingClientRect().width;
+    if (!w) return false;
+    var radius = Math.max(lockCap, 11 / (w / (FMAX - FMIN)));
+    if (!best || bd > radius || bd < 1e-6) return false;
+    if (snapRaf) { cancelAnimationFrame(snapRaf); snapRaf = null; }
+    var from = freq, to = best.f, t0 = performance.now(), DUR = 220;
+    (function step() {
+      var k = Math.min(1, (performance.now() - t0) / DUR);
+      var e = 1 - Math.pow(1 - k, 3);              /* easeOutCubic */
+      setFreq(from + (to - from) * e, 0);
+      snapRaf = k < 1 ? requestAnimationFrame(step) : null;
+    })();
+    return true;
+  }
   function endDrag(e) {
     if (!dragging) return;
     dragging = false; lastTouch = Date.now();
-    vel = trackVel;
-    if (RM || Math.abs(vel) < .004) { vel = 0; ether.setVel(0); return; }
+    /* Decay the fling by how long the pointer has been still. Without this, trackVel was
+       whatever the last move event produced no matter how stale, so lifting off after a
+       pause still threw the needle across the band (measured: a crawl released after 260ms
+       of stillness flung 0.11 kHz, past every detent). A real dial has no momentum left
+       once your hand has stopped. */
+    var still = performance.now() - (lastMoveAt || performance.now());
+    vel = still > 90 ? 0 : trackVel * Math.max(0, 1 - still / 90);
+    if (RM || Math.abs(vel) < .004) { vel = 0; ether.setVel(0); detent(); return; }
     (function glideStep() {
       vel *= .93;
       setFreq(freq + vel, vel);
       if (Math.abs(vel) > .0008 && !dragging) glide = requestAnimationFrame(glideStep);
-      else { vel = 0; ether.setVel(0); glide = null; }
+      else { vel = 0; ether.setVel(0); glide = null; detent(); }
     })();
   }
   scale.addEventListener("pointerup", endDrag);
@@ -404,7 +513,7 @@
   });
 
   /* card CTA — own view switch (the old IIFE never saw this element) */
-  window.addEventListener("resize", function () { if (!card.hidden && innerWidth > 640) positionCard(); });
+  window.addEventListener("resize", function () { sizeLockWindows(); if (!card.hidden && innerWidth > 640) positionCard(); });
 
   /* idle: drift home after 8s */
   if (!RM) ether.onFrame(function () {
@@ -422,15 +531,20 @@
     bands.forEach(function (b) { b.classList.add("reveal"); io.observe(b); });
   }
 
-  /* first frame: locked on home */
+  /* first frame: locked on home. The dwell timer is pre-satisfied so the home card is
+     there on load instead of fading in 170ms later. */
+  sizeLockWindows();
+  candSince = performance.now() - DWELL;   /* home is pre-settled: no 180ms wait on load */
   setFreq(45.062, 0);
 
   /* test hooks (mockup only) */
   window.__relay = {
     tuneTo: function (f) { lastTouch = Date.now(); setFreq(f, 0); },
+    lockWindows: function () { return { capture: +lockCap.toFixed(3), hold: +lockHold.toFixed(3), dwell: DWELL, fade: FADE }; },
     sweepTo: function (target, ms) {
       if (RM) { setFreq(target, 0); return; }
       if (glide) { cancelAnimationFrame(glide); glide = null; }
+      if (snapRaf) { cancelAnimationFrame(snapRaf); snapRaf = null; }
       var from = freq, t0 = performance.now();
       ms = ms || 420;
       lastTouch = Date.now();
