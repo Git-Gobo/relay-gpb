@@ -19,3 +19,5 @@ _build_freqs.json
 assets/bot-android.svg
 # keep the repo root clean: the recalibrator lives in tools/
 tools_recalibrate.py
+relay-v3-for-review/
+relay-v3-for-review.zip
