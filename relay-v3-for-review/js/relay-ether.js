@@ -92,12 +92,8 @@
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
       /* beacon: anchored to the content column, not to the raw canvas width,
          so it stays put when the viewport widens */
-      /* Beacon position is measured against the real ink, not guessed.
-         The old formula (colW*.78, H*.24) landed it on top of the full stop in
-         "No spectators." from 1440px up — verified by range-measuring every text
-         line in the hero and testing candidate points against those boxes. */
       var colW = Math.min(1120, W), colL = (W - colW) / 2;
-      bx = Math.min(W - 34, colL + colW + 46); by = H * .115;
+      bx = colL + colW * .78; by = H * .24;
       measureNeedle();
       makeStars(); makeGrain();
       if (RM) drawStatic();

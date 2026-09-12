@@ -251,12 +251,17 @@ footer .grow{flex:1}
 .robots{position:relative;z-index:1;max-width:920px;margin:0 auto -20px;padding:0 8px}
 .robots svg{display:block;width:100%;height:auto}
 .invite-band .invite{position:relative;z-index:2}
+.arm{transform-box:view-box;animation:bot-sway 5.2s ease-in-out infinite}
 @keyframes bot-sway{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(1.7deg)}}
 @keyframes env-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(2.5px)}}
+.ablink{animation:ablink 2.6s steps(1) infinite}
 @keyframes ablink{0%,60%{opacity:1}61%,100%{opacity:.25}}
+.aring{animation:aring 2.8s ease-in-out infinite}
 @keyframes aring{0%,100%{opacity:.55}50%{opacity:1}}
 @keyframes crtflick{0%,92%{opacity:1}93%,95%{opacity:.35}96%,100%{opacity:1}}
+.akey{transform-box:view-box;animation:akey 6.5s ease-in-out infinite}
 @keyframes akey{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(14deg)}}
+.aneedle{transform-box:view-box;animation:aneedle 7s ease-in-out infinite}
 @keyframes aneedle{0%,100%{transform:rotate(-16deg)}50%{transform:rotate(18deg)}}
 @keyframes reach{0%,100%{transform:rotate(-1.2deg)}50%{transform:rotate(1.4deg)}}
 
@@ -313,7 +318,7 @@ body.retuning main{animation:none}
   row-gap:clamp(12px,1.8vh,22px);align-items:start}
 .hero-v3 .hero-grid > .cq,.hero-v3 .hero-grid > h1{grid-column:1/-1;margin:0}
 .hero-v3 .hero-copy{grid-column:1;grid-row:3;min-width:0;margin-top:0}
-.hero-v3 h1{font-size:clamp(34px,6.4vw,104px);line-height:1.12;margin:0 0 26px;font-weight:800;letter-spacing:-.045em;overflow-wrap:break-word;text-shadow:0 4px 44px rgba(7,10,18,.85)}
+.hero-v3 h1{font-size:clamp(38px,8.6vw,128px);line-height:.95;margin:0 0 22px;font-weight:800;letter-spacing:-.045em;overflow-wrap:break-word;text-shadow:0 4px 44px rgba(7,10,18,.85)}
 .hero-v3 .lede{color:var(--muted);font-size:clamp(15.5px,1.3vw,18.5px);max-width:54ch;margin:0;line-height:1.7}
 .hero-v3 .lede em{color:var(--ink-2)}
 .cq{text-align:left}
@@ -375,9 +380,7 @@ body.retuning main{animation:none}
   .tuner-wrap{margin-top:26px;padding-bottom:18px}
   .tuner-scale{height:46px}
   .tuner-row{font-size:11.5px}
-  .tuner-hint{font-size:9.5px;letter-spacing:.06em;opacity:.62}
-  .tuner-row span{font-size:10px}
-  .tuner-row{gap:4px}
+  .tuner-hint{display:none}
   .mock-banner{font-size:10px;letter-spacing:.02em}
 }
 
@@ -455,7 +458,3 @@ body.retuning main{animation:none}
   .card.qsl,.card.qsl:nth-child(odd),.card.qsl:nth-child(even),
   .card.qsl:hover,.card.qsl:focus-visible{transform:none}
 }
-
-/* the release rate: the one number that ties the feed to the counter */
-.feed-head .rate{display:block;width:100%;font:400 11.5px/1.6 var(--mono);color:var(--faint);letter-spacing:.03em;margin-top:2px}
-@media (min-width:641px){.feed-head .rate{display:inline-block;width:auto;margin:0 0 0 14px}}
