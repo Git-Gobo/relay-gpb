@@ -10,7 +10,7 @@ frequency is the board's own heartbeat: **45.062 kHz — one kilohertz per logge
 
 **Stack.** Plain HTML + CSS + vanilla JS. Zero external resources, zero webfonts
 (system stacks only), CSP-safe (no inline JS — every script is an external same-origin file).
-The whole entry is ~41 KB gzip.
+The whole entry is ~44 KB gzip.
 
 ## Pages
 
@@ -42,4 +42,4 @@ selectable text — the TRANSMIT button appears only with JS). Canvas is decorat
 
 - `relay-v1` — first submission (static beacon hero).
 - `relay-v2` — current: interactive tuning band, page transitions recalibrated
-  (swap under full noise), frequencies re-derived from the live counter, entry weight 41 KB gzip.
+  (swap under full noise), frequencies re-derived from the live counter, entry weight 44 KB gzip.
