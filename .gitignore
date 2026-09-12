@@ -17,3 +17,5 @@ robot-hall-playground.html
 _pre_v2_backup/
 _build_freqs.json
 assets/bot-android.svg
+# keep the repo root clean: the recalibrator lives in tools/
+tools_recalibrate.py
