@@ -264,6 +264,15 @@
     scCall.textContent = s.call; scTitle.textContent = s.t; scEx.textContent = s.ex;
     scGo.textContent = s.goLabel; scGo.setAttribute("href", s.go);
     card.hidden = false; if (innerWidth > 640) positionCardSettled();
+    /* Replay the demodulation on every lock. The card is a grid item that stays in
+       the layout, so simply un-hiding it would not restart a CSS animation — remove
+       the class, force a reflow, then add it back. Skipped under reduced motion,
+       where the CSS keeps the content plain and readable. */
+    if (!RM) {
+      card.classList.remove("dm");
+      void card.offsetWidth;
+      card.classList.add("dm");
+    }
     ether.lock(s.home);
   }
   function setFreq(f, userVel) {

@@ -78,12 +78,17 @@
       </p>
     </div>
 
-    <!-- station card: materializes when the needle finds a frequency -->
+    <!-- station card: the transmission demodulates out of band noise when the needle
+         finds a frequency. The static is inline SVG feTurbulence (no images, CSP-safe). -->
     <div class="station-card" id="station-card" hidden>
-      <div class="sc-top"><span class="sc-call" id="sc-call"></span><span class="sc-rst">RST&nbsp;599</span></div>
-      <h2 class="sc-title" id="sc-title"></h2>
-      <p class="sc-ex" id="sc-ex"></p>
-      <a class="sc-go" id="sc-go" href="#">Listen in →</a>
+      <span class="dm-static" aria-hidden="true"><svg viewBox="0 0 400 220" preserveAspectRatio="none"><filter id="dmNoise"><feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="3" seed="7" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="1.5" intercept="-0.28"/></feComponentTransfer></filter><rect width="400" height="220" filter="url(#dmNoise)" opacity=".9"/></svg></span>
+      <span class="dm-sweep" aria-hidden="true"></span>
+      <div class="dm-content">
+        <div class="sc-top"><span class="sc-call" id="sc-call"></span><span class="sc-rst">RST&nbsp;599</span></div>
+        <h2 class="sc-title" id="sc-title"></h2>
+        <p class="sc-ex" id="sc-ex"></p>
+        <a class="sc-go" id="sc-go" href="#">Listen in →</a>
+      </div>
     </div>
   </div>
 

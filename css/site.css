@@ -323,13 +323,14 @@ body.retuning main{animation:none}
 .ro-sep{color:var(--border-std)}
 .ro-state{color:var(--live);font-size:13px;letter-spacing:.14em}
 
-/* station card */
-.station-card{position:static;grid-column:2;grid-row:3;z-index:3;width:auto;align-self:start;
+/* station card — it does not appear, it DEMODULATES out of band noise (see the
+   dm-* keyframes at the end of this file; `card-in`, referenced here until v3,
+   had no @keyframes at all, so the card never animated) */
+.station-card{position:relative;overflow:hidden;grid-column:2;grid-row:3;z-index:3;width:auto;align-self:start;
   background:linear-gradient(180deg,rgba(18,26,41,.94),rgba(10,14,23,.94));
   border:1px solid rgba(255,180,84,.35);border-radius:var(--r);padding:18px 20px 16px;
   box-shadow:0 0 0 1px rgba(7,10,18,.6),0 28px 70px -30px rgba(0,0,0,.95),0 0 44px -12px rgba(255,180,84,.18);
-  backdrop-filter:blur(6px);
-  animation:card-in .38s cubic-bezier(.2,.9,.25,1.1) both}
+  backdrop-filter:blur(6px)}
 .station-card[hidden]{display:none}
 .sc-top{display:flex;align-items:center;gap:10px;font:600 12.5px/1 var(--mono);margin-bottom:10px}
 .sc-call{color:var(--cyan);letter-spacing:.04em}
@@ -458,3 +459,64 @@ body.retuning main{animation:none}
 /* the release rate: the one number that ties the feed to the counter */
 .feed-head .rate{display:block;width:100%;font:400 11.5px/1.6 var(--mono);color:var(--faint);letter-spacing:.03em;margin-top:2px}
 @media (min-width:641px){.feed-head .rate{display:inline-block;width:auto;margin:0 0 0 14px}}
+
+/* ═══════ the station card DEMODULATES out of band noise ═══════
+   The metaphor, made literal: tuning across the band produces static (the canvas
+   grain is already keyed to tuning speed); when the needle lands on a station the
+   card does not pop in — the static collapses and the transmission resolves out of
+   it, exactly as a demodulated signal resolves out of noise.
+
+   Layers, all decorative (aria-hidden) and all pure CSS/inline SVG:
+     .dm-static  fractal noise from feTurbulence, flickered by stepping its transform
+                 (3 discrete offsets = the same cheap trick the canvas grain uses),
+                 fading out as the carrier locks;
+     .dm-sweep   one horizontal pass — the carrier locking on;
+     .dm-content the real text: blurred and slightly spread, tightening into focus.
+
+   Timing: noise loud for the first third, content resolves from ~35% to the end, so
+   the words are never readable while the static is dominant. Total 1.15s.
+   prefers-reduced-motion: no animation at all — see the reduced-motion block. */
+.station-card .dm-static,.station-card .dm-sweep{position:absolute;inset:0;pointer-events:none}
+.station-card .dm-static{z-index:4;opacity:0;mix-blend-mode:screen}
+.station-card .dm-static svg{display:block;width:100%;height:100%}
+.station-card .dm-sweep{z-index:5;opacity:0;overflow:hidden}
+.station-card .dm-sweep::after{content:"";position:absolute;left:0;right:0;top:-30%;height:34%;
+  background:linear-gradient(180deg,rgba(255,180,84,0),rgba(255,180,84,.22) 45%,rgba(230,236,245,.34) 55%,rgba(255,180,84,0));
+  filter:blur(1px)}
+.station-card.dm .dm-static{animation:dm-static 1.15s cubic-bezier(.2,.7,.3,1) both}
+.station-card.dm .dm-sweep{animation:dm-sweep 1.15s cubic-bezier(.4,0,.2,1) both}
+.station-card.dm .dm-content{animation:dm-resolve 1.15s cubic-bezier(.16,.84,.28,1) both}
+
+@keyframes dm-static{
+  0%   {opacity:.95;transform:translate3d(0,0,0) scale(1.06)}
+  18%  {opacity:.85;transform:translate3d(-3%,2%,0) scale(1.08)}
+  36%  {opacity:.62;transform:translate3d(2%,-3%,0) scale(1.05)}
+  58%  {opacity:.30;transform:translate3d(-2%,1%,0) scale(1.03)}
+  78%  {opacity:.10;transform:translate3d(1%,-1%,0) scale(1.01)}
+  100% {opacity:0;transform:translate3d(0,0,0) scale(1)}
+}
+@keyframes dm-sweep{
+  0%   {opacity:0}
+  38%  {opacity:0}
+  46%  {opacity:1}
+  74%  {opacity:.55}
+  100% {opacity:0}
+}
+.station-card.dm .dm-sweep::after{animation:dm-sweep-move 1.15s cubic-bezier(.4,0,.2,1) both}
+@keyframes dm-sweep-move{
+  0%   {transform:translateY(-40%)}
+  38%  {transform:translateY(-40%)}
+  100% {transform:translateY(320%)}
+}
+@keyframes dm-resolve{
+  0%   {opacity:0;filter:blur(11px) saturate(.4);transform:translateY(9px) scale(.985);letter-spacing:.045em}
+  34%  {opacity:.45;filter:blur(7px) saturate(.6)}
+  62%  {opacity:.92;filter:blur(2.2px) saturate(.9);transform:translateY(2px) scale(.998)}
+  100% {opacity:1;filter:blur(0) saturate(1);transform:none;letter-spacing:normal}
+}
+@media (prefers-reduced-motion:reduce){
+  .station-card.dm .dm-static,.station-card.dm .dm-sweep,
+  .station-card.dm .dm-sweep::after,.station-card.dm .dm-content{animation:none!important}
+  .station-card .dm-static,.station-card .dm-sweep{display:none}
+  .station-card .dm-content{opacity:1;filter:none;transform:none;letter-spacing:normal}
+}
