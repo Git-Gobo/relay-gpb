@@ -87,8 +87,13 @@ def main():
 
     # --- index.html ---
     i2 = idx
-    i2 = sub_count(i2, 'aria-valuemin="%d"' % 36, 'aria-valuemin="%d"' % fmin)
-    i2 = sub_count(i2, 'aria-valuemax="%d"' % 44, 'aria-valuemax="%d"' % fmax)
+    # read the CURRENT min/max rather than assuming the original 36/44 - hardcoding them
+    # made a second run with a different counter silently skip the slider's range.
+    cur_min = re.search(r'aria-valuemin="(\d+)"', i2).group(1)
+    cur_max = re.search(r'aria-valuemax="(\d+)"', i2).group(1)
+    i2 = sub_count(i2, 'aria-valuemin="%s"' % cur_min, 'aria-valuemin="%d"' % fmin)
+    i2 = sub_count(i2, 'aria-valuemax="%s"' % cur_max, 'aria-valuemax="%d"' % fmax)
+    print("\nslider range: %s-%s -> %d-%d" % (cur_min, cur_max, fmin, fmax))
     i2 = sub_count(i2, 'aria-valuenow="%.3f"' % old_home, 'aria-valuenow="%.3f"' % home)
     i2 = sub_count(i2, 'aria-valuetext="%.3f kilohertz' % old_home, 'aria-valuetext="%.3f kilohertz' % home)
     # the four scale labels, replaced as one block so order can never collide
@@ -118,7 +123,13 @@ def main():
                         'No. %s</span><span class="freq">· %.3f kHz' % (n, new_dispatch[int(n)]))
     mp2 = sub_count(mp2, "Out of %s transmissions" % f"{int(round(old_home*1000)):,}",
                     "Out of %s transmissions" % f"{counter:,}")
+    # --- the QSL cards print their own FREQ line, keyed by dispatch No. They follow the
+    #     same rule as the dispatch marks (home + (N-1) * 0.001 kHz) and were missed by the
+    #     first version of this script, so they silently kept the OLD home frequency. ---
+    for freq, no in re.findall(r'<span class="qsl-row">FREQ ([\d.]+) kHz</span>\s*<span class="qsl-row">No\. (\d+)', mp2):
+        mp2 = sub_count(mp2, 'FREQ %s kHz</span>' % freq, 'FREQ %.3f kHz</span>' % new_dispatch[int(no)])
     save("meatproxy.html", mp2)
+    print("QSL FREQ lines re-keyed:", sorted(new_dispatch.items()))
 
     # --- article.html ---
     ar = load("article.html"); ar2 = ar
@@ -143,7 +154,9 @@ def main():
     rd = load("README.md"); rd2 = rd
     rd2 = sub_count(rd2, f"{int(round(old_home*1000)):,}", f"{counter:,}")
     rd2 = sub_count(rd2, "%.3f" % old_home, "%.3f" % home)
-    rd2 = sub_count(rd2, "band 36–44", "band %d–%d" % (fmin, fmax))
+    cur_band = re.search(r"band (\d+)–(\d+)", rd2)
+    if cur_band:
+        rd2 = sub_count(rd2, "band %s–%s" % cur_band.groups(), "band %d–%d" % (fmin, fmax))
     for n, f in sorted(new_dispatch.items()):
         rd2 = re.sub(r"No\. %d → [\d.]+ kHz" % n, "No. %d → %.3f kHz" % (n, f), rd2)
     save("README.md", rd2)
