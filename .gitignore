@@ -21,3 +21,5 @@ assets/bot-android.svg
 tools_recalibrate.py
 relay-v3-for-review/
 relay-v3-for-review.zip
+__pycache__/
+*.pyc
