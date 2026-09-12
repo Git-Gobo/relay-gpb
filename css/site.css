@@ -646,4 +646,50 @@ body.retuning main{animation:none}
   .rig-haze{opacity:.3}
   .sc-rig.on .rig-beam{opacity:.5}
 }
+
+
+/* ═══════ utility: visually hidden but readable by assistive tech ═══════
+   The invitation heading previously borrowed `.skip` to hide itself. That class is
+   written for a skip LINK (amber chip, `:focus{left:0}`), so an <h2> — which can never
+   be focused — sat at left:-9999px purely by accident and carried styling it should not. */
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+  clip-path:inset(50%);white-space:nowrap;border:0}
+
+/* ═══════ buttons: built like the instrument panel they sit on ═══════
+   The incumbent board's button is a flat text button labelled "Copy". Ours keeps that
+   label (a familiar verb beats a themed one on the single most-used control) but reads as
+   hardware: a machined face, a top highlight, a real pressed state and a visible
+   focus ring. Motion is transform/opacity only. */
+.btn{position:relative;font:600 14px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  border-radius:var(--r-sm);border:1px solid var(--border-std);
+  background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.015) 46%,rgba(0,0,0,.16));
+  color:var(--ink);padding:13px 20px;min-height:var(--tap);display:inline-flex;align-items:center;
+  justify-content:center;gap:8px;cursor:pointer;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 2px 0 rgba(0,0,0,.45),0 10px 24px -16px rgba(0,0,0,.9);
+  transition:transform .12s cubic-bezier(.2,.8,.3,1),box-shadow .12s,border-color .15s,background .15s,color .15s}
+.btn::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% -20%,rgba(125,211,252,.16),transparent 62%);opacity:0;transition:opacity .18s}
+.btn:hover{border-color:var(--cyan-deep);color:var(--cyan);text-decoration:none;
+  transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 3px 0 rgba(0,0,0,.45),0 14px 28px -16px rgba(0,0,0,.9)}
+.btn:hover::after{opacity:1}
+.btn:active{transform:translateY(1px);box-shadow:inset 0 2px 6px rgba(0,0,0,.55),0 1px 0 rgba(0,0,0,.4)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+
+.btn.primary,.transmit{background:linear-gradient(180deg,#ffc474,#FFB454 46%,#e09a3c);
+  border-color:#ffcf8e;color:#241703;text-shadow:0 1px 0 rgba(255,255,255,.25);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 2px 0 rgba(120,84,32,.65),0 12px 26px -14px rgba(255,180,84,.45)}
+.btn.primary:hover,.transmit:hover{color:#1c1203;filter:brightness(1.05);border-color:#ffdca8}
+.btn.primary:active,.transmit:active{box-shadow:inset 0 2px 6px rgba(120,84,32,.5),0 1px 0 rgba(120,84,32,.6)}
+.btn.primary:focus-visible,.transmit:focus-visible{outline-color:var(--amber)}
+button.btn.transmit{min-width:150px}
+
+/* the ghost/secondary buttons keep the panel look but stay quiet */
+.piece .byline .ctl .btn{padding:13px 16px;min-height:44px;font-size:11.5px;letter-spacing:.08em;
+  color:var(--muted);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.12));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 2px 0 rgba(0,0,0,.4)}
+.piece .byline .ctl .btn:hover{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){
+  .btn,.btn::after{transition:none}
+  .btn:hover,.btn:active{transform:none}
 }
