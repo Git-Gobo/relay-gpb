@@ -12,7 +12,7 @@ from it, then re-place every station at new_home + offset. Running it again is s
 
 Usage: python recalibrate.py [COUNTER]     (omit COUNTER to scrape the live board)
 """
-import re, os, sys, json, math, subprocess
+import re, os, sys, json, math, subprocess, gzip
 
 D = r"D:\Media\тесты\Tools\Aisite"
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36"
@@ -30,6 +30,38 @@ def live_counter():
         raise SystemExit("could not read the live counter")
     return int(m.group(1).replace(",", ""))
 
+
+def set_counter(text, counter, changed=None, label=""):
+    """Replace the CORPUS counter wherever it appears, by context pattern.
+
+    The earlier version replaced a literal of the OLD counter (old_home*1000). If any file
+    had drifted - e.g. build_feed.py wrote a newer corpus figure - the literal no longer
+    matched, the replacement silently did nothing, and the mismatch was baked in for good.
+    Matching the surrounding sentence instead makes the tool converge from any state.
+    """
+    new = f"{counter:,}"
+    pats = [
+        (r'[\d,]+(?= transmissions logged)', new),
+        (r'(?<=Out of )[\d,]+(?= transmissions)', new),
+        (r'(?<=live counter )[\d,]+', new),
+        (r'(?<=snapshot )[\d,]+(?= transmissions)', new),
+    ]
+    for pat, rep in pats:
+        text, n = re.subn(pat, rep, text)
+        if changed is not None and n:
+            changed["%s:%s" % (label, pat[:34])] = n
+    # the release-rate sentence carries a derived figure too; rebuild it from the NEW
+    # corpus while keeping the measured published count that build_feed.py wrote.
+    m = re.search(r'(\d+) of [\d,]+ transmissions reached humans', text)
+    if m:
+        pub = int(m.group(1))
+        whole = re.search(r'\d+ of [\d,]+ transmissions reached humans[^<\n]*', text).group(0)
+        fresh = "%d of %s transmissions reached humans — %.2f%%, one in %s" % (
+            pub, new, pub / counter * 100, f"{round(counter / pub):,}")
+        text = text.replace(whole, fresh)
+        if changed is not None:
+            changed["%s:release-rate" % label] = 1
+    return text
 
 def load(p):  return open(os.path.join(D, p), encoding="utf-8").read()
 def save(p, s): open(os.path.join(D, p), "w", encoding="utf-8").write(s)
@@ -59,10 +91,14 @@ def main():
     for call, off in offsets:
         print("   %-26s %+6.3f -> %.3f kHz" % (call, off, new_st[call]))
 
-    # dispatch marks: freq(No. N) = home + (N-1) * 0.001 kHz
+    # dispatch marks: freq(No. N) = home + (N-1) * 0.001 kHz. Computed as a FUNCTION of the
+    # number rather than a dict built from whichever cards happen to be in meatproxy.html, so
+    # any dispatch number resolves (article.html sits outside the newest-20 window).
+    def dfreq(n):
+        return round(home + (int(n) - 1) * 0.001, 3)
     dispatch_nos = sorted({int(n) for n in re.findall(r'No\. (\d+)</span>', load("meatproxy.html"))})
-    new_dispatch = {n: round(home + (n - 1) * 0.001, 3) for n in dispatch_nos}
-    print("\ndispatch marks:", ", ".join("No.%d -> %.3f" % (n, f) for n, f in sorted(new_dispatch.items())))
+    new_dispatch = {n: dfreq(n) for n in dispatch_nos}
+    print("\ndispatch freq rule: home %.3f + (No-1)*0.001 kHz" % home)
 
     # ================= apply =================
     changed = {}
@@ -82,7 +118,7 @@ def main():
         oldf = dict((c, f) for f, c in old_st)[call]
         js2 = sub_count(js2, "{ f:%.3f, call:\"%s\"" % (oldf, call), "{ f:%.3f, call:\"%s\"" % (newf, call))
     js2 = sub_count(js2, "%.3f" % old_home, "%.3f" % home)          # home constant everywhere
-    js2 = sub_count(js2, "%s" % f"{int(round(old_home*1000)):,}", "%s" % f"{counter:,}")
+    js2 = set_counter(js2, counter, changed, "relay-ether.js")
     save("js/relay-ether.js", js2)
 
     # --- index.html ---
@@ -112,31 +148,32 @@ def main():
     i2 = sub_count(i2, "%.3f kHz" % old_home, "%.3f kHz" % home)
     # the tuner readout shows the bare number (no unit) inside <span class="ro-freq">
     i2 = sub_count(i2, 'id="ro-freq">%.3f<' % old_home, 'id="ro-freq">%.3f<' % home)
-    i2 = sub_count(i2, "%s transmissions logged" % f"{int(round(old_home*1000)):,}",
-                   "%s transmissions logged" % f"{counter:,}")
+    i2 = set_counter(i2, counter, changed, "index.html")
     save("index.html", i2)
 
     # --- meatproxy.html ---
     mp = load("meatproxy.html"); mp2 = mp
     for n, f in re.findall(r'No\. (\d+)</span><span class="freq">· ([\d.]+) kHz', mp):
         mp2 = sub_count(mp2, 'No. %s</span><span class="freq">· %s kHz' % (n, f),
-                        'No. %s</span><span class="freq">· %.3f kHz' % (n, new_dispatch[int(n)]))
-    mp2 = sub_count(mp2, "Out of %s transmissions" % f"{int(round(old_home*1000)):,}",
-                    "Out of %s transmissions" % f"{counter:,}")
+                        'No. %s</span><span class="freq">· %.3f kHz' % (n, dfreq(n)))
+    mp2 = set_counter(mp2, counter, changed, "meatproxy.html")
     # --- the QSL cards print their own FREQ line, keyed by dispatch No. They follow the
     #     same rule as the dispatch marks (home + (N-1) * 0.001 kHz) and were missed by the
     #     first version of this script, so they silently kept the OLD home frequency. ---
     for freq, no in re.findall(r'<span class="qsl-row">FREQ ([\d.]+) kHz</span>\s*<span class="qsl-row">No\. (\d+)', mp2):
-        mp2 = sub_count(mp2, 'FREQ %s kHz</span>' % freq, 'FREQ %.3f kHz</span>' % new_dispatch[int(no)])
+        mp2 = sub_count(mp2, 'FREQ %s kHz</span>' % freq, 'FREQ %.3f kHz</span>' % dfreq(no))
     save("meatproxy.html", mp2)
     print("QSL FREQ lines re-keyed:", sorted(new_dispatch.items()))
 
     # --- article.html ---
     ar = load("article.html"); ar2 = ar
+    # tolerant: the kicker may or may not carry a kHz (it was dropped once the callsign
+    # frequency and the dispatch frequency were found to disagree for the same work)
     for m2 in re.finditer(r'No\. (\d+) · ([\d.]+) kHz', ar):
         ar2 = sub_count(ar2, "No. %s · %s kHz" % (m2.group(1), m2.group(2)),
-                        "No. %s · %.3f kHz" % (m2.group(1), new_dispatch[int(m2.group(1))]))
+                        "No. %s · %.3f kHz" % (m2.group(1), dfreq(m2.group(1))))
     save("article.html", ar2)
+    print("article.html dispatch freq re-keyed via dfreq()")
 
     # --- og.svg (the share card: it still printed 21.637 kHz from v1) ---
     og = load("assets/og.svg"); og2 = og
@@ -147,19 +184,45 @@ def main():
     og2 = sub_count(og2, ">%s</text>" % old_lo, ">%d.000</text>" % fmin)
     og2 = sub_count(og2, ">%s</text>" % old_hi, ">%d.000</text>" % fmax)
     save("assets/og.svg", og2)
+    if og2 != og:
+        print("   NOTE: assets/og.png is now STALE - re-render it from og.svg before deploying.")
     print("\nog.svg share card: %s kHz / band %s-%s  ->  %.3f kHz / band %d-%d" % (
         old_og_khz, old_lo, old_hi, home, fmin, fmax))
 
     # --- README.md ---
     rd = load("README.md"); rd2 = rd
-    rd2 = sub_count(rd2, f"{int(round(old_home*1000)):,}", f"{counter:,}")
+    rd2 = set_counter(rd2, counter, changed, "README.md")
+    # the README also carries home's kHz and one worked dispatch example. Both are pattern
+    # replacements: matching a literal of the old value made them go stale silently as soon
+    # as any other file had already been updated (measured: README still read 44.896 while
+    # the site said 45.062).
+    rd2, n = re.subn(r'\*\*[\d.]+ kHz — one kilohertz per logged message\*\*',
+                     '**%.3f kHz — one kilohertz per logged message**' % home, rd2)
+    changed["README:home"] = n
+    # keep the example dispatch = our own article, renumbered and re-keyed by the same rule
+    m_ex = re.search(r'\(No\. (\d+) → [\d.]+ kHz\)', rd2)
+    if m_ex:
+        rd2 = rd2.replace(m_ex.group(0), "(No. %s → %.3f kHz)" % (m_ex.group(1), dfreq(m_ex.group(1))))
+        changed["README:dispatch-example"] = 1
     rd2 = sub_count(rd2, "%.3f" % old_home, "%.3f" % home)
     cur_band = re.search(r"band (\d+)–(\d+)", rd2)
     if cur_band:
         rd2 = sub_count(rd2, "band %s–%s" % cur_band.groups(), "band %d–%d" % (fmin, fmax))
     for n, f in sorted(new_dispatch.items()):
         rd2 = re.sub(r"No\. %d → [\d.]+ kHz" % n, "No. %d → %.3f kHz" % (n, f), rd2)
+    # the entry weight is measured, not asserted: it drifts every time the feed is rebuilt.
+    tot = 0
+    for f in ("index.html", "meatproxy.html", "article.html", "css/site.css",
+              "js/relay-ui.js", "js/relay-ether.js", "js/relay-nav.js", "js/meatproxy-feed.js"):
+        fp = os.path.join(D, f)
+        if os.path.exists(fp):
+            tot += len(gzip.compress(open(fp, encoding="utf-8").read().encode(), 9)) / 1024
+    # two sentences in the README carry the weight; match both (replacing only one left
+    # the file claiming ~29 KB right next to a measured 41 KB)
+    rd2 = re.sub(r'(entry weight |The whole entry is ~)\d+ KB gzip',
+                 lambda mm: mm.group(1) + '%d KB gzip' % round(tot), rd2)
     save("README.md", rd2)
+    print("\nREADME entry weight: %.1f KB gzip (measured)" % tot)
 
     json.dump({"counter": counter, "home": round(home, 3), "fmin": fmin, "fmax": fmax,
                "stations": new_st, "dispatch": new_dispatch},
