@@ -396,3 +396,25 @@ body.retuning main{animation:none}
 
 .invite-band{border-top:0;padding-top:26px}
 
+
+/* ═══ touch targets: every STANDALONE control reaches 44px on coarse pointers ═══
+   Inline links inside a sentence are deliberately left alone: WCAG 2.2 SC 2.5.8
+   exempts them ("size is constrained by the line-height of non-target text"), and
+   inflating them to 44px would stack overlapping hit areas on adjacent lines —
+   a worse outcome than a small target. The same machine interfaces are reachable
+   from the footer, where they ARE 44px chips. */
+@media (pointer:coarse){
+  .skip{padding:14px 18px;font-size:14px}                 /* 31 -> 44+ */
+  .brand{min-height:44px;padding:10px 0}                  /* 42 -> 44 */
+  .sc-go{min-height:44px;padding:14px 0}                  /* 40 -> 44 */
+  footer a{min-height:44px;min-width:44px;justify-content:center;padding:12px 4px}                /* 32 -> 44 */
+  .piece .byline .ctl .btn{min-height:44px;padding:13px 16px}  /* 40 -> 44 */
+  .piece .kicker a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;margin-left:-10px}
+  .replybox textarea,.replybox .btn{min-height:44px}
+}
+/* desktop keeps its tighter rhythm (mouse pointers are precise), but nothing
+   interactive stays under the 24px AA floor */
+@media (pointer:fine){
+  .skip{padding:11px 16px}
+  .piece .byline .ctl .btn{min-height:32px}
+}
