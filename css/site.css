@@ -82,7 +82,7 @@ nav.tabs a[aria-current="page"]{color:var(--amber);border-color:var(--amber-deep
 /* hero */
 .hero{position:relative;padding:60px 0 48px;text-align:center}
 .beacon{position:relative;width:140px;height:140px;margin:0 auto 24px;display:grid;place-items:center}
-.beacon .core{width:16px;height:16px;border-radius:50%;background:var(--amber);box-shadow:0 0 26px 6px rgba(255,180,84,.5),0 0 60px 20px rgba(255,180,84,.18);z-index:2;animation:core-pulse 3.4s ease-out infinite}
+
 @keyframes core-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
 .beacon .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,180,84,.5);animation:ripple 3.4s ease-out infinite}
 .beacon .ring:nth-of-type(2){animation-delay:1.13s}
@@ -104,9 +104,8 @@ nav.tabs a[aria-current="page"]{color:var(--amber);border-color:var(--amber-deep
 .dial .scale::after{content:"";position:absolute;inset:8px 0 0;background:repeating-linear-gradient(90deg,rgba(255,180,84,.55) 0 1px,transparent 1px 140px)}
 .dial .needle{position:absolute;left:50%;top:-7px;bottom:-4px;width:2px;margin-left:-1px;background:var(--amber);box-shadow:0 0 10px 2px rgba(255,180,84,.55);animation:needle-drift 7s ease-in-out infinite alternate}
 @keyframes needle-drift{from{transform:translateX(-5px)}to{transform:translateX(5px)}}
-.dial .labels{display:flex;justify-content:space-between;gap:6px;font:400 10.5px/1 var(--mono);color:var(--faint);letter-spacing:.08em;margin-top:7px}
-.dial .labels .onair{color:var(--amber);letter-spacing:.14em;white-space:nowrap}
-.dial .labels .onair::before{content:"▮ ";color:var(--amber)}
+
+
 @media (max-width:560px){.dial{max-width:300px;margin-top:20px}.dial .labels{font-size:9.5px;letter-spacing:.04em}.dial .labels .edge{display:none}.dial .labels .onair{letter-spacing:.08em}}
 
 button.btn.transmit{background:var(--amber);border-color:var(--amber);color:#241703;font-weight:600;min-width:140px}
@@ -242,14 +241,14 @@ footer .wrap{display:flex;gap:8px 20px;flex-wrap:wrap;align-items:center;font:40
 footer a{color:var(--muted);padding:6px 0;min-height:32px;display:inline-flex;align-items:center}
 footer .grow{flex:1}
 
-.view[hidden]{display:none}
+
 .mock-banner{font:500 11.5px/1.4 var(--mono);color:var(--amber);text-align:center;padding:9px 14px;border-bottom:1px solid var(--border-subtle);background:rgba(255,180,84,.06);letter-spacing:.04em}
 @media (max-width:560px){.hero{padding:52px 0 40px}.cta-row .btn{flex:1 1 auto;justify-content:center}.sec-head .meta{margin-left:0;width:100%}}
 
 
 /* ---------- robots: four kinds of agents extend the invitation ---------- */
 .robots{position:relative;z-index:1;max-width:920px;margin:0 auto -20px;padding:0 8px}
-.robots svg{display:block;width:100%;height:auto}
+
 .invite-band .invite{position:relative;z-index:2}
 @keyframes bot-sway{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(1.7deg)}}
 @keyframes env-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(2.5px)}}
