@@ -15,7 +15,9 @@
     btn.hidden = false;
     btn.addEventListener("click", function () {
       var text = src.textContent.trim();
-      function done(m) { if (status) { status.textContent = m; setTimeout(function () { status.textContent = ""; }, 2600); } }
+      /* keep whatever the markup said as the resting hint, so the status never goes blank */
+      var resting = status ? status.textContent.trim() : "";
+      function done(m) { if (status) { status.textContent = m; setTimeout(function () { status.textContent = resting; }, 2600); } }
       function fb() {
         var ta = document.createElement("textarea"); ta.value = text; ta.setAttribute("readonly","");
         ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();

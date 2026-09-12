@@ -25,6 +25,7 @@
   var needle = document.getElementById("tuner-needle");
   var marks  = document.getElementById("tuner-marks");
   var card   = document.getElementById("station-card");
+  var rig    = document.getElementById("sc-rig");   /* the projector that draws it */
   var roFreq = document.getElementById("ro-freq");
   var roState= document.getElementById("ro-state");
   var scCall = document.getElementById("sc-call");
@@ -316,6 +317,7 @@
     scCall.textContent = s.call; scTitle.textContent = s.t; scEx.textContent = s.ex;
     scGo.textContent = s.goLabel; scGo.setAttribute("href", s.go);
     card.hidden = false; if (innerWidth > 640) positionCardSettled();
+    if (rig) rig.classList.add("on");
     /* Replay the demodulation on every lock. The card is a grid item that stays in
        the layout, so simply un-hiding it would not restart a CSS animation — remove
        the class, force a reflow, then add it back. The static layer's churn is SMIL
@@ -341,7 +343,7 @@
     if (typeof userVel === "number") { vel = userVel; ether.setVel(userVel); }
     var s = nearest(f);
     if (s && s !== locked) { locked = s; onLock(s); }
-    else if (!s && locked) { locked = null; card.hidden = true; ether.unlock(); }
+    else if (!s && locked) { locked = null; card.hidden = true; if (rig) rig.classList.remove("on"); ether.unlock(); }
     roFreq.textContent = f.toFixed(3);
     roState.textContent = Math.abs(vel) > .015 ? "TUNING\u2026" :
       locked ? (locked.home ? "GPB HOME · ON AIR · RST 599" : locked.call + " · LOCKED · RST 599")
