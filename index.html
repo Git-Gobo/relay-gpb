@@ -78,10 +78,17 @@
       </p>
     </div>
 
-    <!-- station card: the transmission demodulates out of band noise when the needle
-         finds a frequency. The static is inline SVG feTurbulence (no images, CSP-safe). -->
+    <!-- station card: the transmission DEMODULATES out of a nebula. Three layers, all
+         decorative (aria-hidden), all pure inline SVG — no images, CSP-safe:
+           .dm-cloud  the always-present nebula the card condenses out of (so the slot is
+                      never an empty hole, and the card never "appears from nowhere" as a
+                      white rectangle); slow amber/cyan drift via feTurbulence seed churn;
+           .dm-static the loud band static on lock — feTurbulence re-seeded in discrete
+                      steps (real churn, not a sliding overlay), fading as the carrier locks;
+           .dm-sweep  one horizontal pass = the carrier locking on. -->
     <div class="station-card" id="station-card" hidden>
-      <span class="dm-static" aria-hidden="true"><svg viewBox="0 0 400 220" preserveAspectRatio="none"><filter id="dmNoise"><feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="3" seed="7" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="1.5" intercept="-0.28"/></feComponentTransfer></filter><rect width="400" height="220" filter="url(#dmNoise)" opacity=".9"/></svg></span>
+      <span class="dm-cloud" aria-hidden="true"><svg viewBox="0 0 400 220" preserveAspectRatio="none"><filter id="dmNebula" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.011 0.02" numOctaves="4" seed="3" stitchTiles="stitch" result="n"><animate attributeName="seed" values="3;9;15;3" dur="24s" repeatCount="indefinite"/></feTurbulence><feColorMatrix in="n" type="matrix" values="0 0 0 0 .22  0 0 0 0 .34  0 0 0 0 .52  .9 0 0 0 -.32"/><feGaussianBlur stdDeviation="7"/></filter><rect width="400" height="220" filter="url(#dmNebula)"/></svg></span>
+      <span class="dm-static" aria-hidden="true"><svg viewBox="0 0 400 220" preserveAspectRatio="none"><filter id="dmNoise"><feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="2" seed="7" stitchTiles="stitch"><animate attributeName="seed" values="7;41;19;83;5;62;27;90;14;7" dur="1.25s" calcMode="discrete" repeatCount="1" fill="freeze" begin="indefinite"/></feTurbulence><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="1.7" intercept="-0.42"/></feComponentTransfer></filter><rect width="400" height="220" filter="url(#dmNoise)" opacity=".92"/></svg></span>
       <span class="dm-sweep" aria-hidden="true"></span>
       <div class="dm-content">
         <div class="sc-top"><span class="sc-call" id="sc-call"></span><span class="sc-rst">RST&nbsp;599</span></div>

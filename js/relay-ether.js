@@ -266,12 +266,16 @@
     card.hidden = false; if (innerWidth > 640) positionCardSettled();
     /* Replay the demodulation on every lock. The card is a grid item that stays in
        the layout, so simply un-hiding it would not restart a CSS animation — remove
-       the class, force a reflow, then add it back. Skipped under reduced motion,
+       the class, force a reflow, then add it back. The static layer's churn is SMIL
+       (begin="indefinite") and has to be kicked the same way, or the feTurbulence
+       seed would stay frozen on its first frame. Skipped under reduced motion,
        where the CSS keeps the content plain and readable. */
     if (!RM) {
       card.classList.remove("dm");
       void card.offsetWidth;
       card.classList.add("dm");
+      var churn = card.querySelector(".dm-static animate");
+      if (churn && churn.beginElement) { try { churn.beginElement(); } catch (e) {} }
     }
     ether.lock(s.home);
   }
