@@ -59,6 +59,8 @@
     var running = false, visible = true, lastT = 0, lastRipple = 0, lastHop = 0;
     var frameCbs = [], fpsTimes = [];
     var bx = 0, by = 0, ny = 0;
+    /* second leg of the signal path: beacon -> the card's nebula */
+    var cardX = 0, cardY = 0, cardLive = false;
 
     function makeStars() {
       stars = [];
@@ -99,6 +101,7 @@
       var colW = Math.min(1120, W), colL = (W - colW) / 2;
       bx = Math.min(W - 34, colL + colW + 46); by = H * .115;
       measureNeedle();
+      measureCard();
       makeStars(); makeGrain();
       if (RM) drawStatic();
     }
@@ -151,6 +154,17 @@
       return { x: u*u*a.x + 2*u*t*c.x + t*t*b.x, y: u*u*a.y + 2*u*t*c.y + t*t*b.y };
     }
     function nx() { return scaleW ? scaleL + needlePct * scaleW : needlePct * W; }
+    function measureCard() {
+      var cr = cv.getBoundingClientRect();
+      if (!cr.width || !card) { cardLive = false; return; }
+      var r = card.getBoundingClientRect();
+      cardLive = !card.hidden && r.width > 4 && r.height > 4;
+      if (!cardLive) return;
+      /* aim at the card's near edge, not its middle: the signal should arrive at the
+         nebula it condenses out of, not disappear behind the panel */
+      cardX = r.left - cr.left + r.width * (r.left + r.width / 2 < bx + cr.left ? .92 : .08);
+      cardY = (r.top + r.height / 2) - cr.top;
+    }
     function measureNeedle() {
       var cr = cv.getBoundingClientRect();
       if (!cr.width) return;
@@ -163,12 +177,47 @@
     }
     function drawBeam(t) {
       if (!lockOn) return;
+      var rgb = lockHome ? "255,180,84" : "94,234,212";
+      var ax = nx(), ay = ny;
+      /* the signal path: tuning scale -> home beacon -> the card's nebula.
+         Two legs, both measured from the DOM, so it stays correct at any width. */
       ctx.save();
       ctx.setLineDash([2, 7]);
       if (!RM) ctx.lineDashOffset = -t / 38;
-      ctx.strokeStyle = lockHome ? "rgba(255,180,84,.4)" : "rgba(94,234,212,.4)";
+      ctx.strokeStyle = "rgba(" + rgb + ",.4)";
       ctx.lineWidth = 1.4;
-      ctx.beginPath(); ctx.moveTo(nx(), ny); ctx.lineTo(bx, by); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
+      if (cardLive) ctx.lineTo(cardX, cardY);
+      ctx.stroke();
+
+      if (!RM) {
+        /* pulses walking the path: what the relay is actually doing while you watch */
+        var d1 = Math.hypot(bx - ax, by - ay);
+        var d2 = cardLive ? Math.hypot(cardX - bx, cardY - by) : 0;
+        var total = d1 + d2;
+        if (total > 1) {
+          var period = 2600;
+          for (var k = 0; k < 2; k++) {
+            var u = ((t / period) + k * .5) % 1;
+            var px, py;
+            if (u * total <= d1) {
+              var q = u * total / d1;
+              px = ax + (bx - ax) * q; py = ay + (by - ay) * q;
+            } else {
+              var q2 = (u * total - d1) / d2;
+              px = bx + (cardX - bx) * q2; py = by + (cardY - by) * q2;
+            }
+            var fade = Math.sin(u * 3.1416);
+            var g = ctx.createRadialGradient(px, py, 0, px, py, 9);
+            g.addColorStop(0, "rgba(" + rgb + "," + (.55 * fade).toFixed(3) + ")");
+            g.addColorStop(1, "rgba(" + rgb + ",0)");
+            ctx.fillStyle = g;
+            ctx.beginPath(); ctx.arc(px, py, 9, 0, 6.29); ctx.fill();
+            ctx.fillStyle = "rgba(230,236,245," + (.8 * fade).toFixed(3) + ")";
+            ctx.beginPath(); ctx.arc(px, py, 1.7, 0, 6.29); ctx.fill();
+          }
+        }
+      }
       ctx.restore();
     }
     function drawGrain() {
@@ -229,7 +278,10 @@
       setNeedle: function (pct) { needlePct = pct; measureNeedle(); if (RM) drawStatic(); },
       setVel: function (v) { vel = v; grainTarget = lockOn ? .012 : Math.min(.42, .05 + Math.abs(v) * 2.6); },
       lock: function (isHome) { lockOn = true; lockHome = !!isHome; grainTarget = .012;
-        burst(nx(), ny, isHome ? "rgba(255,180,84,%A)" : "rgba(94,234,212,%A)", 3, 120);
+        var col = isHome ? "rgba(255,180,84,%A)" : "rgba(94,234,212,%A)";
+        burst(nx(), ny, col, 3, 120);
+        measureCard();
+        if (cardLive) burst(cardX, cardY, col, 2, 90);   /* the signal landing in the nebula */
         if (RM) drawStatic(); },
       unlock: function () { lockOn = false; grainTarget = .06; if (RM) drawStatic(); },
       onFrame: function (cb) { frameCbs.push(cb); },
