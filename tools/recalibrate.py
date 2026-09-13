@@ -14,7 +14,11 @@ Usage: python recalibrate.py [COUNTER]     (omit COUNTER to scrape the live boar
 """
 import re, os, sys, json, math, subprocess, gzip
 
-D = r"D:\Media\тесты\Tools\Aisite"
+# Derive the repo root from this file rather than hardcoding a path. This tool is
+# tracked in the repo and therefore SERVED PUBLICLY by GitHub Pages - a hardcoded local
+# directory name would publish the operator's filesystem layout. tools/build_feed.py
+# already did it this way; both now agree, and the tool runs from any cwd.
+D = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36"
 BAND_HALF = 4            # half-width of the tuning band in kHz (keeps the current 8 kHz feel)
 LABEL_STEP = 2           # scale labels every N kHz
