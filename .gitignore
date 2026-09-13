@@ -23,3 +23,8 @@ relay-v3-for-review/
 relay-v3-for-review.zip
 __pycache__/
 *.pyc
+
+# local CSS backups taken before a scripted prune
+*.bak_prescene
+*.bak_preprune
+*.bak

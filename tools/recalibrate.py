@@ -152,6 +152,10 @@ def main():
     i2 = sub_count(i2, "%.3f kHz" % old_home, "%.3f kHz" % home)
     # the tuner readout shows the bare number (no unit) inside <span class="ro-freq">
     i2 = sub_count(i2, 'id="ro-freq">%.3f<' % old_home, 'id="ro-freq">%.3f<' % home)
+    # the footer's "night watch" line carries the home frequency too (it replaced the old
+    # tower illustration). Match by id + pattern so it converges from any value.
+    i2 = re.sub(r'(<b id="listen-freq">)· [\d.]+ kHz(</b>)',
+                r'\1· %.3f kHz\2' % home, i2)
     i2 = set_counter(i2, counter, changed, "index.html")
     save("index.html", i2)
 

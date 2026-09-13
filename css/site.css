@@ -13,11 +13,8 @@ html{scroll-behavior:smooth;max-width:100%;overflow-x:clip}
 /* reduced-motion: kill ALL decorative animation (brief requirement) */
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  .beacon .ring,.beacon .core,.brand .glyph .orb,.cq .blink,.dial .needle,.pulse,.band-row .bar i,.scene .ring,.scene .mastglow,.scene .tw,.scene .hopdot,.scene .dialglow,.arm,.env-g,.ablink,.aring,.crtface,.akey,.aneedle{animation:none!important;transition:none!important}
+  .beacon .ring,.beacon .core,.brand .glyph .orb,.cq .blink,.dial .needle,.pulse,.band-row .bar i,.arm,.env-g,.ablink,.aring,.crtface,.akey,.aneedle{animation:none!important;transition:none!important}
   .beacon .ring{opacity:.35}
-  .scene .ring{opacity:.3}
-  .scene .tw{opacity:.5}
-  .scene .hopdot{opacity:.8;offset-distance:50%}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
 body{
@@ -104,7 +101,6 @@ nav.tabs a[aria-current="page"]{color:var(--amber);border-color:var(--amber-deep
 .dial .scale::after{content:"";position:absolute;inset:8px 0 0;background:repeating-linear-gradient(90deg,rgba(255,180,84,.55) 0 1px,transparent 1px 140px)}
 .dial .needle{position:absolute;left:50%;top:-7px;bottom:-4px;width:2px;margin-left:-1px;background:var(--amber);box-shadow:0 0 10px 2px rgba(255,180,84,.55);animation:needle-drift 7s ease-in-out infinite alternate}
 @keyframes needle-drift{from{transform:translateX(-5px)}to{transform:translateX(5px)}}
-
 
 @media (max-width:560px){.dial{max-width:300px;margin-top:20px}.dial .labels{font-size:9.5px;letter-spacing:.04em}.dial .labels .edge{display:none}.dial .labels .onair{letter-spacing:.08em}}
 
@@ -225,29 +221,37 @@ article.piece{max-width:720px;margin:0 auto}
 .replybox .note{font:400 11.5px/1.4 var(--mono);color:var(--faint)}
 
 /* ---------- footer scene: the night watch ---------- */
-.scene-wrap{max-width:1240px;margin:26px auto 0;padding:0 12px}
-footer .scene{display:block;width:100%;height:auto;max-height:250px}
-.scene .ring{transform-box:view-box;transform-origin:950px 30px;opacity:0;animation:scene-ripple 3.6s ease-out infinite}
-.scene .ring:nth-of-type(2){animation-delay:1.2s}
-.scene .ring:nth-of-type(3){animation-delay:2.4s}
-@keyframes scene-ripple{0%{transform:scale(.25);opacity:.85}100%{transform:scale(5);opacity:0}}
-.scene .tw{animation:tw 4.5s ease-in-out infinite}
+
 @keyframes tw{0%,100%{opacity:.15}50%{opacity:.75}}
-.scene .hopdot{offset-path:path("M938 44 Q 520 -6 40 96");offset-distance:0%;opacity:0;animation:hop 7s linear infinite}
-@keyframes hop{0%{offset-distance:0%;opacity:0}8%{opacity:.9}88%{opacity:.9}100%{offset-distance:100%;opacity:0}}
-@supports not (offset-path:path("M0 0 L1 1")){.scene .hopdot{display:none}}
-.scene .dialglow{animation:dialglow 3.2s ease-in-out infinite}
-@keyframes dialglow{0%,100%{opacity:.55}50%{opacity:1}}
+
+@supports not (offset-path:path("M0 0 L1 1")){}
 
 footer{border-top:1px solid var(--border-subtle);padding:32px 0 0;margin-top:24px}
 footer .wrap{display:flex;gap:8px 20px;flex-wrap:wrap;align-items:center;font:400 12.5px/1.6 var(--mono);color:var(--faint)}
+
+/* ═══════ the footer's "night watch" line ═══════
+   Replaced a 250px illustration of a transmission tower. The illustration's SVG caption
+   measured 4px on a 390px phone (the whole scene scaled to 78px), unreadable exactly where
+   its sentence was the point. This is real HTML text: a live amber pulse + the home
+   frequency, legible at every width, and it removes the duplicate transmitting beacon
+   (the hero already has one). The pulse respects reduced-motion via the global rule. */
+footer .listen{display:inline-flex;align-items:center;gap:8px;
+  font:500 10.5px/1.5 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+footer .listen b{color:var(--amber);font-weight:500;letter-spacing:.1em}
+footer .listen .pulse{width:6px;height:6px;border-radius:50%;flex:none;background:var(--amber);
+  box-shadow:0 0 9px rgba(255,180,84,.85);animation:listen-pulse 3.2s ease-in-out infinite}
+@keyframes listen-pulse{0%,100%{opacity:.35;transform:scale(.82)}50%{opacity:1;transform:scale(1)}}
+@media (max-width:640px){
+  footer .listen{letter-spacing:.1em;font-size:9.5px;gap:6px}
+}
+@media (prefers-reduced-motion:reduce){
+  footer .listen .pulse{animation:none;opacity:.8}
+}
 footer a{color:var(--muted);padding:6px 0;min-height:32px;display:inline-flex;align-items:center}
 footer .grow{flex:1}
 
-
 .mock-banner{font:500 11.5px/1.4 var(--mono);color:var(--amber);text-align:center;padding:9px 14px;border-bottom:1px solid var(--border-subtle);background:rgba(255,180,84,.06);letter-spacing:.04em}
 @media (max-width:560px){.hero{padding:52px 0 40px}.cta-row .btn{flex:1 1 auto;justify-content:center}.sec-head .meta{margin-left:0;width:100%}}
-
 
 /* ---------- robots: four kinds of agents extend the invitation ---------- */
 .robots{position:relative;z-index:1;max-width:920px;margin:0 auto -20px;padding:0 8px}
@@ -265,7 +269,6 @@ footer .grow{flex:1}
 @media (max-width:900px){ .hall-wrap{position:static;margin-top:-8px;padding:26px 0 8px} .hall{max-height:46vh} }
 @media (prefers-reduced-motion:reduce){
   }
-
 
 /* ---------- retune transition: pages don't cut, they re-tune through static ---------- */
 .retake{position:fixed;inset:0;z-index:80;pointer-events:none;opacity:0}
@@ -428,7 +431,6 @@ body.retuning main{animation:none}
 
 .invite-band{border-top:0;padding-top:26px}
 
-
 /* ═══ touch targets: every STANDALONE control reaches 44px on coarse pointers ═══
    Inline links inside a sentence are deliberately left alone: WCAG 2.2 SC 2.5.8
    exempts them ("size is constrained by the line-height of non-target text"), and
@@ -450,7 +452,6 @@ body.retuning main{animation:none}
   .skip{padding:11px 16px}
   .piece .byline .ctl .btn{min-height:32px}
 }
-
 
 /* ═══════ QSL variant: a dispatch is a confirmed-reception card ═══════
    A real QSL card is what a radio operator sends back to confirm "yes, I received
@@ -585,7 +586,6 @@ body.retuning main{animation:none}
   .station-card .dm-content{opacity:1;filter:none;transform:none}
 }
 
-
 /* ═══════ the projector rig ═══════
    The station card used to appear in an empty grid slot, so the right-hand column was
    a hole until you happened to lock a station. Now that slot holds the MACHINE that
@@ -646,7 +646,6 @@ body.retuning main{animation:none}
   .rig-haze{opacity:.3}
   .sc-rig.on .rig-beam{opacity:.5}
 }
-
 
 /* ═══════ utility: visually hidden but readable by assistive tech ═══════
    The invitation heading previously borrowed `.skip` to hide itself. That class is
@@ -717,3 +716,10 @@ button.btn.transmit{min-width:150px}
   .hero-v3 .station-card.out .dm-cloud,.hero-v3 .station-card.out .dm-static{animation:none!important}
   .hero-v3 .station-card.out{opacity:0}
 }
+
+/* visible freshness stamp on the feed: when the generator last read the API. Honest on a
+   static host - "read Ns ago" would require a server handler, which this build has none. */
+.feed-head .fresh{display:block;flex-basis:100%;margin-top:2px;
+  font:500 10.5px/1.5 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.feed-head .fresh a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(125,211,252,.3)}
+.feed-head .fresh a:hover{border-bottom-color:var(--cyan)}

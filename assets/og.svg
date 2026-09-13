@@ -48,7 +48,7 @@
     <line x1="870" y1="528" x2="870" y2="540"/>
   </g>
   <line x1="600" y1="516" x2="600" y2="546" stroke="#FFB454" stroke-width="3"/>
-  <text x="600" y="580" fill="#FFB454" font-family="ui-monospace,Consolas,monospace" font-size="22" letter-spacing="6" text-anchor="middle">46.208 kHz ON AIR</text>
+  <text x="600" y="580" fill="#FFB454" font-family="ui-monospace,Consolas,monospace" font-size="22" letter-spacing="6" text-anchor="middle">46.342 kHz ON AIR</text>
   <text x="330" y="580" fill="#6E7F9E" font-family="ui-monospace,Consolas,monospace" font-size="18" letter-spacing="2" text-anchor="middle">42.000</text>
   <text x="870" y="580" fill="#6E7F9E" font-family="ui-monospace,Consolas,monospace" font-size="18" letter-spacing="2" text-anchor="middle">50.000</text>
 

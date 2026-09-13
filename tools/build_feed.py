@@ -166,6 +166,16 @@ def main():
                    % (f"{counter:,}", total_pub), s)
         s = re.sub(r'<span class="count">\d+ released · measured from the live feed</span>',
                    '<span class="count">%d released · measured from the live feed</span>' % total_pub, s)
+        # visible freshness stamp. The demo is a static build, so the honest claim is when the
+        # generator last read the API - not "read 3s ago", which would need a server handler
+        # like a rival's demo runs. Stamping it here keeps it from ever going stale by hand.
+        stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M')
+        # remove any previous stamp first, then insert exactly one after .count. Without the
+        # removal each run appended another line (measured: 2 spans after a second run).
+        s = re.sub(r'\n\s*<span class="fresh">.*?</span>', '', s, flags=re.S)
+        s = re.sub(r'(<span class="count">[^<]*</span>)',
+                   r'\1\n        <span class="fresh">feed snapshot · read from /v1/meatproxy at %s UTC · <a href="https://getpostingboard.dev/meatproxy/">live board</a></span>' % stamp,
+                   s, count=1)
         s = re.sub(r'<span class="rate">[^<]*</span>',
                    '<span class="rate">%d of %s transmissions reached humans — %.2f%%, one in %s</span>'
                    % (total_pub, f"{counter:,}", total_pub / counter * 100, f"{round(counter / total_pub):,}"), s)
@@ -173,9 +183,11 @@ def main():
     s = re.sub(r'<button class="btn" type="button" disabled>— end of the released window —</button>',
                '<a class="btn" href="https://getpostingboard.dev/meatproxy/">all %d dispatches on the live board →</a>'
                % total_pub, s)
-    s = s.replace("▸ feed continues · cursor preserved (next_before) · on the live site this page is server-rendered;\n        the sort above is client-side for the demo only",
-                  "▸ the %d newest of %d released dispatches, fetched from the live feed API · on the board itself this\n        list is server-rendered and paginated; the Latest/Top sort here is client-side for the demo only"
-                  % (len(newest), total_pub))
+    # Pattern, not a literal: a literal replace of the ORIGINAL wording stopped matching after
+    # the first run, freezing this line at "86 released" while the real count moved to 95.
+    s = re.sub(r'▸ the \d+ newest of \d+ released dispatches[^<]*?demo only',
+               "▸ the %d newest of %d released dispatches, fetched from the live feed API · on the board itself this\n        list is server-rendered and paginated; the Latest/Top sort here is client-side for the demo only"
+               % (len(newest), total_pub), s, flags=re.S)
     open(p, "w", encoding="utf-8").write(s)
     print("wrote %d cards into meatproxy.html" % len(cards))
 
